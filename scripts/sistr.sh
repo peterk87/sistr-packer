@@ -123,8 +123,8 @@ Download latest sistr_db dump
 ================================================================================
 EOF
 
+# TODO: Use version of DB dump that matches sistr_backend release version
 curl -O https://lfz.corefacility.ca/sistr-db-dumps/sistr_db-4330_public-2016_01_12.sql.gz
-#curl -O http://0.0.0.0/sistr-db-dumps/sistr_db-4330_public-2016_01_12.sql.gz
 
 
 cat << EOF
@@ -158,7 +158,6 @@ Install Mash
 EOF
 
 # wget https://github.com/marbl/Mash/releases/download/v1.1/mash-Linux64-v1.1.tar.gz
-# tar xzf mash-Linux64-v1.1.tar.gz --strip-components=1
 curl -O https://lfz.corefacility.ca/sistr-db-dumps/mash.tgz
 tar xzf mash.tgz --strip-components=1
 cp mash /usr/bin/mash
@@ -212,6 +211,35 @@ echo "Update sistr-config.py"
 sed -i 's/QUAST_BIN_PATH = .*/QUAST_BIN_PATH = "\/home\/sistr\/quast-2.3\/quast.py"/' /home/sistr/sistr_backend/sistr-config.py
 sed -i 's/MASH_BIN_PATH = .*/MASH_BIN_PATH = "\/usr\/bin\/mash"/' /home/sistr/sistr_backend/sistr-config.py
 
+echo "Update Supervisord.conf; ensure 0.0.0.0 instead of localhost"
+sed -ri 's/^(.+gunicorn.+--bind)\s(\S+):\w+/\1 0.0.0.0:8000/' /home/sistr/sistr_backend/supervisord.conf
+
+
+cat << EOF
+
+================================================================================
+Download sistr_backend repo
+================================================================================
+EOF
+
+cd /home/sistr
+mkdir -P /home/sistr/sistr-app
+wget https://bitbucket.org/peterk87/sistr-app/get/master.tar.gz -O sistr-app.tgz
+tar -xzf sistr-app.tgz -C /home/sistr/sistr-app/ --strip-components=1
+sed -i 's@https://lfz.corefacility.ca/sistr-wtf/api/@http://localhost:44448/api/@g' /home/sistr/sistr-app/resources/public/js/compiled/sistr_app.js
+ln -s /home/sistr/sistr-app/resources/public/ /usr/share/nginx/html/sistr
+
+
+cat << EOF
+
+================================================================================
+Enable and start nginx
+================================================================================
+EOF
+
+systemctl enable nginx.service
+systemctl start nginx.service
+
 
 cat << EOF
 
@@ -225,11 +253,7 @@ source /home/sistr/sistr_backend/.venv/bin/activate
 export PYTHONPATH="/home/sistr/sistr_backend"
 export SISTR_APP_SETTINGS="/home/sistr/sistr_backend/sistr-config.py"
 
-# curl -O https://lfz.corefacility.ca/sistr-db-dumps/sistr-venv.tgz
-# tar -xzf sistr-venv.tgz
-
-# ls .venv
-
+# upgrade pip to allow installation of wheel pre-compiled binary Python modules
 pip install --upgrade pip
 pip install wheel
 pip install SQLAlchemy
@@ -281,6 +305,7 @@ ExecStop=/home/sistr/sistr_backend/.venv/bin/supervisorctl shutdown
 WantedBy=multi-user.target
 EOF
 
+
 cat << EOF
 
 ================================================================================
@@ -308,13 +333,7 @@ EOF
 
 systemctl start sistr.service
 systemctl status sistr.service
-# systemctl stop sistr.service
-# journalctl -xe
 
-# firewall-cmd --permanent --zone=public --add-service=http
-# firewall-cmd --permanent --zone=public --add-forward-port=port=80:toport=8000:proto=tcp
-# maybe open up port for supervisorctl?
-# firewall-cmd --permanent --zone=public --add-port=9001/tcp
 
 cat << EOF
 
@@ -324,4 +343,7 @@ Enable port forwarding for SISTR Gunicorn running at localhost:8000
 EOF
 
 firewall-cmd --permanent --zone=public --add-service=http
+firewall-cmd --permanent --zone=public --add-port=80/tcp
 firewall-cmd --permanent --zone=public --add-port=8000/tcp
+# maybe open up port for supervisorctl?
+# firewall-cmd --permanent --zone=public --add-port=9001/tcp
