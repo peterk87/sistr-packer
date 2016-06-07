@@ -1,5 +1,4 @@
 cat << EOF
-OH FUCK YES
   _________.___  ______________________________  
  /   _____/|   |/   _____/\__    ___/\______   \ 
  \_____  \ |   |\_____  \   |    |    |       _/ 
@@ -218,32 +217,6 @@ sed -ri 's/^(.+gunicorn.+--bind)\s(\S+):\w+/\1 0.0.0.0:8000/' /home/sistr/sistr_
 cat << EOF
 
 ================================================================================
-Download sistr_backend repo
-================================================================================
-EOF
-
-cd /home/sistr
-mkdir -P /home/sistr/sistr-app
-wget https://bitbucket.org/peterk87/sistr-app/get/master.tar.gz -O sistr-app.tgz
-tar -xzf sistr-app.tgz -C /home/sistr/sistr-app/ --strip-components=1
-sed -i 's@https://lfz.corefacility.ca/sistr-wtf/api/@http://localhost:44448/api/@g' /home/sistr/sistr-app/resources/public/js/compiled/sistr_app.js
-ln -s /home/sistr/sistr-app/resources/public/ /usr/share/nginx/html/sistr
-
-
-cat << EOF
-
-================================================================================
-Enable and start nginx
-================================================================================
-EOF
-
-systemctl enable nginx.service
-systemctl start nginx.service
-
-
-cat << EOF
-
-================================================================================
 Setup sistr_backend Python 2.7 virtualenv
 ================================================================================
 EOF
@@ -270,9 +243,34 @@ EOF
 alembic upgrade head
 
 
-
 # Modify supervisord.conf with # of Gunicorn and Celery workers that make sense for image
 # TODO
+
+
+cat << EOF
+
+================================================================================
+Download sistr-app repo
+================================================================================
+EOF
+
+mkdir -p /home/sistr/sistr-app
+cd /home/sistr
+wget https://bitbucket.org/peterk87/sistr-app/get/master.tar.gz -O sistr-app.tgz
+tar -xzf sistr-app.tgz -C /home/sistr/sistr-app/ --strip-components=1
+sed -i 's@https://lfz.corefacility.ca/sistr-wtf/api/@http://localhost:44448/api/@g' /home/sistr/sistr-app/resources/public/js/compiled/sistr_app.js
+ln -s /home/sistr/sistr-app/resources/public/ /usr/share/nginx/html/sistr
+
+
+cat << EOF
+
+================================================================================
+Enable and start nginx
+================================================================================
+EOF
+
+systemctl enable nginx.service
+systemctl start nginx.service
 
 
 cat << EOF
