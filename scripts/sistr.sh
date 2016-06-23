@@ -6,7 +6,9 @@ cat << EOF
 /_______  /|___/_______  /  |____|    |____|_  / 
         \/             \/                    \/  
 
-Main SISTR VM build script for CentOS 7
+Main SISTR VM build script for CentOS 7 
+
+DB v1.0; sistr_backend v1.1
 
 ================================================================================
 Install EPEL, development tools and deps for SISTR
@@ -118,12 +120,11 @@ sudo -u postgres psql -f /home/sistr/sistr_db-init.sql
 cat << EOF
 
 ================================================================================
-Download latest sistr_db dump
+Download sistr_db dump (v1.0 2016-06-17 with 7511 public genomes)
 ================================================================================
 EOF
 
-# TODO: Use version of DB dump that matches sistr_backend release version
-curl -O https://lfz.corefacility.ca/sistr-db-dumps/sistr_db-4330_public-2016_01_12.sql.gz
+curl https://lfz.corefacility.ca/sistr-db-dumps/sistr_db-7511_public-2016_06_17-no_contigs.sql.gz > sistr_db-dump.sql.gz
 
 
 cat << EOF
@@ -133,13 +134,13 @@ Load public sistr_db dump
 ================================================================================
 EOF
 
-gunzip -c sistr_db-4330_public-2016_01_12.sql.gz | sudo -u postgres psql sistr_db
+gunzip -c sistr_db-dump.sql.gz | sudo -u postgres psql sistr_db
 
 
 cat << EOF
 
 ================================================================================
-Install NCBI BLAST+
+Install NCBI BLAST+ (v2.4.0)
 ================================================================================
 EOF
 
@@ -191,12 +192,12 @@ tar xzf quast.tgz
 cat << EOF
 
 ================================================================================
-Download sistr_backend repo
+Download sistr_backend repo (v1.1)
 ================================================================================
 EOF
 
 # wget https://bitbucket.org/peterk87/sistr_backend/get/master.tar.gz -O sistr_backend.tgz
-curl -O https://lfz.corefacility.ca/sistr-db-dumps/sistr_backend.tgz
+curl https://bitbucket.org/peterk87/sistr_backend/get/1.1.tar.gz > sistr_backend.tgz
 echo "Extract sistr_backend.tgz straight into sistr_backend directory"
 tar -xzf sistr_backend.tgz -C /home/sistr/sistr_backend/ --strip-components=1
 echo "Create SISTR log directory"
