@@ -16,6 +16,8 @@ You're required to install a few different pieces of software on your machine be
 Building the VM
 ---------------
 
+*NOTE: You can only build the VM in a GUI/non-headless OS environment (e.g. your local machine running Ubuntu). It is not possible at this time to build the VM on a headless server.*
+
 You can build the VM once you've got the prerequisites installed. From the `packer/` directory in the root of the project folder, run:
 
     packer build template.json
